@@ -84,7 +84,7 @@ function update_script() {
     npm ci --silent &>/dev/null
     npm run build &>/dev/null
     rm -rf /app/wwwroot
-    cp -r build /app/wwwroot
+    cp -r build/* /app/wwwroot
 
     echo "${RELEASE}" > /app/version.txt
     rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
@@ -122,5 +122,4 @@ echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:8080${CL}"
 echo -e "${INFO}${YW} Configuration file location:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}/app/Config/Settings.yml${CL}"
 echo -e "${INFO}${YW} Edit the config file and set ImmichServerUrl and ApiKey before use!${CL}"
-echo -e "${INFO}${YW} To update ImmichFrame in the future, re-run this script.${CL}"
 
