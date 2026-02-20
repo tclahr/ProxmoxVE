@@ -65,7 +65,7 @@ msg_info "Building ImmichFrame Frontend (SvelteKit)"
 cd "${SRCDIR}/immichFrame.Web" || exit
 $STD npm ci
 $STD npm run build
-cp -r build /app/wwwroot
+cp -r build/* /app/wwwroot
 msg_ok "Frontend Built"
 
 msg_info "Creating Configuration Directory"
