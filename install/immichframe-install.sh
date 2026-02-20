@@ -19,25 +19,35 @@ update_os
 # =============================================================================
 
 msg_info "Installing Dependencies"
-$STD apk add --no-cache \
-  bash \
+$STD apt-get install -y \
   curl \
-  git \
-  icu-libs \
-  krb5-libs \
-  libgcc \
-  libssl3 \
-  libstdc++ \
+  ca-certificates \
+  libicu-dev \
+  libssl-dev \
   nodejs \
   npm \
-  zlib
+  gettext-base
 msg_ok "Installed Dependencies"
 
-msg_info "Installing .NET SDK & ASP.NET Core Runtime"
-$STD apk add --no-cache \
-  dotnet8-sdk \
-  aspnetcore8-runtime
-msg_ok ".NET SDK & ASP.NET Core Runtime Installed"
+msg_info "Installing .NET SDK via dotnet-install.sh"
+# We use the official dotnet-install.sh script instead of the Microsoft APT feed
+# because dotnet-runtime-deps-9.0 from packages.microsoft.com has an unresolvable
+# dependency conflict on Debian 13 Trixie (requires libicu<=74, but Trixie ships libicu76).
+mkdir -p /opt/dotnet
+curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+chmod +x /tmp/dotnet-install.sh
+
+# Install the SDK (needed to compile) into /opt/dotnet
+$STD /tmp/dotnet-install.sh \
+  --channel 9.0 \
+  --install-dir /opt/dotnet \
+  --no-path
+
+# Make dotnet available system-wide
+ln -sf /opt/dotnet/dotnet /usr/local/bin/dotnet
+
+rm /tmp/dotnet-install.sh
+msg_ok ".NET SDK Installed"
 
 msg_info "Fetching Latest ImmichFrame Release"
 RELEASE=$(curl -s https://api.github.com/repos/immichFrame/ImmichFrame/releases/latest \
@@ -56,7 +66,7 @@ mkdir -p /app
 cd "${SRCDIR}" || exit
 $STD dotnet publish ImmichFrame.WebApi/ImmichFrame.WebApi.csproj \
   --configuration Release \
-  --runtime linux-musl-x64 \
+  --runtime linux-x64 \
   --self-contained false \
   --output /app
 msg_ok "Backend Built"
@@ -193,49 +203,47 @@ Accounts:
 EOF
 msg_ok "Configuration File Created"
 
-msg_info "Creating ImmichFrame Service (OpenRC)"
-cat <<'EOF' > /etc/init.d/immichframe
-#!/sbin/openrc-run
-
-name="ImmichFrame"
-description="ImmichFrame Digital Photo Frame"
-
-command="/usr/bin/dotnet"
-command_args="/app/ImmichFrame.WebApi.dll"
-command_background=true
-command_user="immichframe"
-
-pidfile="/run/immichframe.pid"
-output_log="/var/log/immichframe/immichframe.log"
-error_log="/var/log/immichframe/immichframe.err"
-
-directory="/app"
-
-export ASPNETCORE_URLS="http://0.0.0.0:8080"
-export ASPNETCORE_ENVIRONMENT="Production"
-
-depend() {
-  need net
-  after firewall
-}
-
-start_pre() {
-  checkpath --directory --owner immichframe:immichframe --mode 0750 /var/log/immichframe
-  checkpath --directory --owner immichframe:immichframe --mode 0750 /app/Config
-}
-EOF
-chmod +x /etc/init.d/immichframe
-msg_ok "Service Created"
-
 msg_info "Creating Dedicated User"
-addgroup -S immichframe 2>/dev/null || true
-adduser -S -G immichframe -h /app -s /sbin/nologin immichframe 2>/dev/null || true
+useradd -r -s /sbin/nologin -d /app -M immichframe 2>/dev/null || true
 chown -R immichframe:immichframe /app
 msg_ok "User 'immichframe' Created"
 
+msg_info "Creating ImmichFrame systemd Service"
+cat <<'EOF' > /etc/systemd/system/immichframe.service
+[Unit]
+Description=ImmichFrame Digital Photo Frame
+After=network.target
+
+[Service]
+Type=simple
+User=immichframe
+Group=immichframe
+
+WorkingDirectory=/app
+ExecStart=/opt/dotnet/dotnet /app/ImmichFrame.WebApi.dll
+
+# ASP.NET Core environment
+Environment=ASPNETCORE_URLS=http://0.0.0.0:8080
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_CONTENTROOT=/app
+Environment=DOTNET_ROOT=/opt/dotnet
+
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=immichframe
+
+[Install]
+WantedBy=multi-user.target
+EOF
+msg_ok "systemd Service Created"
+
 msg_info "Enabling and Starting ImmichFrame Service"
-$STD rc-update add immichframe default
-$STD rc-service immichframe start
+$STD systemctl daemon-reload
+$STD systemctl enable immichframe
+$STD systemctl start immichframe
 msg_ok "ImmichFrame Service Started"
 
 msg_info "Saving Version Info"
@@ -244,12 +252,14 @@ msg_ok "Version ${RELEASE} Saved"
 
 msg_info "Cleaning Up Build Artifacts"
 rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
-# Remove .NET SDK após build (mantém apenas o runtime para economizar espaço)
-$STD apk del dotnet8-sdk
-$STD apk cache clean
+# Remove the .NET SDK components — keep only the ASP.NET Core runtime to save space
+/tmp/dotnet-install.sh --channel 9.0 --install-dir /opt/dotnet --runtime aspnetcore --no-path &>/dev/null || true
+# Prune SDK-only directories (sdks, templates, packs) — runtime dlls stay intact
+rm -rf /opt/dotnet/sdk /opt/dotnet/templates /opt/dotnet/packs
+$STD apt-get autoremove -y
+$STD apt-get clean
 msg_ok "Cleanup Complete"
 
 motd_ssh
 customize
 cleanup_lxc
-
