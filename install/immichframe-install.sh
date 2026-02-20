@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Copyright (c) 2021-2026 community-scripts ORG
-# Author: tclahr
+# Author: Thiago Canozzo Lahr (tclahr)
 # License: MIT | https://github.com/tclahr/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/immichFrame/ImmichFrame
 
@@ -34,10 +34,9 @@ $STD apk add --no-cache \
 msg_ok "Installed Dependencies"
 
 msg_info "Installing .NET SDK & ASP.NET Core Runtime"
-# .NET 9 está disponível nos repositórios do Alpine 3.21
 $STD apk add --no-cache \
-  dotnet9-sdk \
-  aspnetcore9-runtime
+  dotnet8-sdk \
+  aspnetcore8-runtime
 msg_ok ".NET SDK & ASP.NET Core Runtime Installed"
 
 msg_info "Fetching Latest ImmichFrame Release"
@@ -53,24 +52,24 @@ SRCDIR=$(ls -d /tmp/ImmichFrame-*)
 msg_ok "Source Downloaded"
 
 msg_info "Building ImmichFrame Backend (ASP.NET Core)"
-mkdir -p /opt/immichframe/app/backend
+mkdir -p /app
 cd "${SRCDIR}" || exit
 $STD dotnet publish ImmichFrame.WebApi/ImmichFrame.WebApi.csproj \
   --configuration Release \
   --runtime linux-musl-x64 \
   --self-contained false \
-  --output /opt/immichframe/app/backend
+  --output /app
 msg_ok "Backend Built"
 
 msg_info "Building ImmichFrame Frontend (SvelteKit)"
 cd "${SRCDIR}/immichFrame.Web" || exit
 $STD npm ci
 $STD npm run build
-cp -r build /opt/immichframe/app/backend/wwwroot
+cp -r build /app/wwwroot
 msg_ok "Frontend Built"
 
 msg_info "Creating Configuration Directory"
-mkdir -p /opt/immichframe/config
+mkdir -p /app/Config
 
 # Cria Settings.yml com comentários explicativos
 cat <<'EOF' > /opt/immichframe/config/Settings.yml
@@ -78,106 +77,53 @@ cat <<'EOF' > /opt/immichframe/config/Settings.yml
 # ImmichFrame Configuration
 # Docs: https://immichframe.dev/docs/getting-started/configuration
 # =====================================================================
-
-# ---------------------------------------------------------------------
-# REQUIRED — Sem esses campos o ImmichFrame não funciona
-# ---------------------------------------------------------------------
-
-# URL do servidor Immich (ex: http://192.168.1.100:2283)
-ImmichServerUrl: ""
-
-# API Key do Immich
-# Obtenha em: Immich > Account Settings > API Keys > New API Key
-ApiKey: ""
-
-# ---------------------------------------------------------------------
-# Slideshow
-# ---------------------------------------------------------------------
-
-# Intervalo entre fotos em segundos (padrão: 10)
-Interval: "10"
-
-# Duração da transição em segundos (padrão: 2)
-TransitionDuration: "2"
-
-# Efeito de zoom na imagem (padrão: true)
-ImageZoom: "true"
-
-# Efeito de panorâmica (padrão: false)
-ImagePan: "false"
-
-# Preencher a tela (pode cortar bordas) (padrão: false)
-ImageFill: "false"
-
-# Layout: "fullscreen" ou "splitview"
-Layout: "fullscreen"
-
-# Renovar pool de imagens a cada N minutos (padrão: 30)
-RenewImagesDuration: "30"
-
-# ---------------------------------------------------------------------
-# Filtros de Imagens
-# ---------------------------------------------------------------------
-
-# Mostrar memórias (fotos do mesmo dia em anos anteriores)
-ShowMemories: "false"
-
-# Mostrar apenas favoritos
-ShowFavorites: "false"
-
-# Incluir fotos arquivadas
-ShowArchived: "false"
-
-# Fotos dos últimos N dias (ex: "30")
-# ImagesFromDays: ""
-
-# Fotos a partir de (ISO 8601: YYYY-MM-DD)
-# ImagesFromDate: ""
-
-# Fotos até (ISO 8601: YYYY-MM-DD)
-# ImagesUntilDate: ""
-
-# Filtro por avaliação mínima (1-5 estrelas)
-# Rating: ""
-
-# ---------------------------------------------------------------------
-# Álbuns e Pessoas
-# ---------------------------------------------------------------------
-
-# IDs de álbuns separados por vírgula
-# Obtenha o ID em: Immich > Albums > selecione o álbum > veja a URL
-# Albums: "uuid-album-1,uuid-album-2"
-
-# IDs de álbuns a excluir
-# ExcludedAlbums: "uuid-album-excluido"
-
-# IDs de pessoas a incluir
-# People: "uuid-pessoa-1"
-
-# ---------------------------------------------------------------------
-# Sobreposições (Overlays)
-# ---------------------------------------------------------------------
-
-# Exibir relógio
-ShowClock: "false"
-
-# Tamanho da fonte do relógio em pixels
-# ClockFontSize: "100"
-
-# Posição do relógio: BottomLeft, BottomRight, TopLeft, TopRight
-# ClockPosition: "BottomLeft"
-
-# Exibir barra de progresso
-ShowProgressBar: "true"
-
-# Exibir informações da foto (localização, data, etc.)
-ShowImageDesc: "false"
-
-# Exibir nome do álbum
-ShowImageLocation: "false"
-
-# Exibir data da foto
-ShowImageDate: "false"
+General:
+  AuthenticationSecret: null
+  DownloadImages: false
+  RenewImagesDuration: 30
+  Webcalendars:
+    - calendarurl
+  RefreshAlbumPeopleInterval: 12
+  PhotoDateFormat: dd/MM/yyyy
+  ImageLocationFormat: 'City,State,Country'
+  WeatherApiKey: ''
+  UnitSystem: metric
+  WeatherLatLong: '40.730610,-73.935242'
+  Webhook: null
+  Language: en
+  Interval: 10
+  TransitionDuration: 2
+  ShowClock: true
+  ClockFormat: 'hh:mm'
+  ClockDateFormat: 'eee, MMM d'
+  ShowProgressBar: true
+  ShowPhotoDate: true
+  ShowImageDesc: true
+  ShowPeopleDesc: true
+  ShowAlbumName: true
+  ShowImageLocation: true
+  PrimaryColor: '#93B1C9'
+  SecondaryColor: '#000000'
+  Style: none
+  BaseFontSize: 16px
+  ShowWeatherDescription: true
+  WeatherIconUrl: 'https://openweathermap.org/img/wn/{IconId}.png'
+  ImageZoom: true
+  ImagePan: false
+  ImageFill: false
+  Layout: splitview
+Accounts:
+  - ImmichServerUrl: 'https://immich-server-address'
+    ApiKey: 'ENTER YOUR API KEY HERE'
+    ImagesFromDate: null
+    ShowMemories: false
+    ShowFavorites: false
+    ShowArchived: false
+    ImagesFromDays: null
+    Rating: null
+    Albums:
+      - ALBUM1_UUID
+      - ALBUM2_UUID
 EOF
 msg_ok "Configuration File Created"
 
@@ -189,7 +135,7 @@ name="ImmichFrame"
 description="ImmichFrame Digital Photo Frame"
 
 command="/usr/bin/dotnet"
-command_args="/opt/immichframe/app/backend/ImmichFrame.WebApi.dll"
+command_args="/app/ImmichFrame.WebApi.dll"
 command_background=true
 command_user="immichframe"
 
@@ -197,11 +143,10 @@ pidfile="/run/immichframe.pid"
 output_log="/var/log/immichframe/immichframe.log"
 error_log="/var/log/immichframe/immichframe.err"
 
-directory="/opt/immichframe/app/backend"
+directory="/app"
 
 export ASPNETCORE_URLS="http://0.0.0.0:8080"
 export ASPNETCORE_ENVIRONMENT="Production"
-export ImmichFrame__ConfigPath="/opt/immichframe/config"
 
 depend() {
   need net
@@ -210,7 +155,7 @@ depend() {
 
 start_pre() {
   checkpath --directory --owner immichframe:immichframe --mode 0750 /var/log/immichframe
-  checkpath --directory --owner immichframe:immichframe --mode 0750 /opt/immichframe/config
+  checkpath --directory --owner immichframe:immichframe --mode 0750 /app/Config
 }
 EOF
 chmod +x /etc/init.d/immichframe
@@ -218,8 +163,8 @@ msg_ok "Service Created"
 
 msg_info "Creating Dedicated User"
 addgroup -S immichframe 2>/dev/null || true
-adduser -S -G immichframe -h /opt/immichframe -s /sbin/nologin immichframe 2>/dev/null || true
-chown -R immichframe:immichframe /opt/immichframe
+adduser -S -G immichframe -h /app -s /sbin/nologin immichframe 2>/dev/null || true
+chown -R immichframe:immichframe /app
 msg_ok "User 'immichframe' Created"
 
 msg_info "Enabling and Starting ImmichFrame Service"
@@ -228,13 +173,13 @@ $STD rc-service immichframe start
 msg_ok "ImmichFrame Service Started"
 
 msg_info "Saving Version Info"
-echo "${RELEASE}" > /opt/immichframe/version.txt
+echo "${RELEASE}" > /app/version.txt
 msg_ok "Version ${RELEASE} Saved"
 
 msg_info "Cleaning Up Build Artifacts"
 rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
 # Remove .NET SDK após build (mantém apenas o runtime para economizar espaço)
-$STD apk del dotnet9-sdk
+$STD apk del dotnet8-sdk
 $STD apk cache clean
 msg_ok "Cleanup Complete"
 

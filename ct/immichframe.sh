@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source <(curl -fsSL https://raw.githubusercontent.com/tclahr/ProxmoxVE/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
-# Author: tclahr
+# Author: Thiago Canozzo Lahr (tclahr)
 # License: MIT | https://github.com/tclahr/ProxmoxVE/raw/main/LICENSE
 # Source: https://github.com/immichFrame/ImmichFrame
 
@@ -76,17 +76,17 @@ function update_script() {
       --configuration Release \
       --runtime linux-musl-x64 \
       --self-contained false \
-      --output /opt/immichframe/app/backend \
+      --output /app \
       &>/dev/null
 
     msg_info "Building frontend"
     cd "${SRCDIR}/immichFrame.Web" || exit
     npm ci --silent &>/dev/null
     npm run build &>/dev/null
-    rm -rf /opt/immichframe/app/backend/wwwroot
-    cp -r build /opt/immichframe/app/backend/wwwroot
+    rm -rf /app/wwwroot
+    cp -r build /app/wwwroot
 
-    echo "${RELEASE}" > /opt/immichframe/version.txt
+    echo "${RELEASE}" > /app/version.txt
     rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
 
     msg_info "Starting ${APP} service"
@@ -120,7 +120,7 @@ echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:8080${CL}"
 echo -e "${INFO}${YW} Configuration file location:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}/opt/immichframe/config/Settings.yml${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}/app/Config/Settings.yml${CL}"
 echo -e "${INFO}${YW} Edit the config file and set ImmichServerUrl and ApiKey before use!${CL}"
 echo -e "${INFO}${YW} To update ImmichFrame in the future, re-run this script.${CL}"
 
