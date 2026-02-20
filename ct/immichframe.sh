@@ -52,17 +52,17 @@ function update_script() {
   check_container_resources
 
   # Step 1: Verify installation exists
-  if [[ ! -d /opt/immichframe ]]; then
+  if [[ ! -d /app ]]; then
     msg_error "No ${APP} Installation Found!"
     exit
   fi
 
   RELEASE=$(curl -s https://api.github.com/repos/immichFrame/ImmichFrame/releases/latest | grep "tag_name" | awk -F'"' '{print $4}')
-  if [[ ! -f /opt/immichframe/version.txt ]] || [[ "${RELEASE}" != "$(cat /opt/immichframe/version.txt)" ]]; then
+  if [[ ! -f /app/version.txt ]] || [[ "${RELEASE}" != "$(cat /app/version.txt)" ]]; then
     msg_info "Updating ${APP} to ${RELEASE}"
 
     msg_info "Stopping ${APP} service"
-    service immichframe stop &>/dev/null
+    systemctl stop immichframe 2>/dev/null
 
     msg_info "Downloading source ${RELEASE}"
     curl -fsSL "https://github.com/immichFrame/ImmichFrame/archive/refs/tags/${RELEASE}.tar.gz" \
@@ -72,9 +72,9 @@ function update_script() {
 
     msg_info "Building backend"
     cd "${SRCDIR}" || exit
-    dotnet publish ImmichFrame.WebApi/ImmichFrame.WebApi.csproj \
+    /opt/dotnet/dotnet publish ImmichFrame.WebApi/ImmichFrame.WebApi.csproj \
       --configuration Release \
-      --runtime linux-musl-x64 \
+      --runtime linux-x64 \
       --self-contained false \
       --output /app \
       &>/dev/null
@@ -122,4 +122,3 @@ echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:8080${CL}"
 echo -e "${INFO}${YW} Configuration file location:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}/app/Config/Settings.yml${CL}"
 echo -e "${INFO}${YW} Edit the config file and set ImmichServerUrl and ApiKey before use!${CL}"
-
