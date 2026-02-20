@@ -72,7 +72,7 @@ msg_info "Creating Configuration Directory"
 mkdir -p /app/Config
 
 # Cria Settings.yml com comentários explicativos
-cat <<'EOF' > /opt/immichframe/config/Settings.yml
+cat <<'EOF' > /app/Config/Settings.yml
 # =====================================================================
 # ImmichFrame Configuration
 # Docs: https://immichframe.dev/docs/getting-started/configuration
