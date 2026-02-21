@@ -19,8 +19,8 @@
         "cpu": 1,
         "ram": 1024,
         "hdd": 8,
-        "os": "Alpine Linux",
-        "version": "3.23"
+        "os": "Debian",
+        "version": "13"
       }
     }
   ],
@@ -30,15 +30,11 @@
   },
   "notes": [
     {
-      "text": "After installation, edit `/opt/immichframe/config/Settings.yml` and set **ImmichServerUrl** and **ApiKey**. Then restart the service with `rc-service immichframe restart`.",
+      "text": "After installation, edit `/app/Config/Settings.yml` and set **ImmichServerUrl** and **ApiKey**. Then restart the service with `systemctl restart immichframe`.",
       "type": "warning"
     },
     {
       "text": "Get your API Key at: Immich → Account Settings → API Keys → New API Key.",
-      "type": "info"
-    },
-    {
-      "text": "The .NET SDK is removed after compilation to save disk space. Only the ASP.NET Core Runtime remains installed.",
       "type": "info"
     },
     {

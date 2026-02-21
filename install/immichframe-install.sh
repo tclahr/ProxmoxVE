@@ -253,9 +253,7 @@ msg_ok "Version ${RELEASE} Saved"
 msg_info "Cleaning Up Build Artifacts"
 rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
 
-# Prune SDK-only directories (sdks, templates, packs) — runtime dlls stay intact
-rm -rf /opt/dotnet/sdk /opt/dotnet/templates /opt/dotnet/packs
-$STD apt-get autoremove -y
+#$STD apt-get autoremove -y
 $STD apt-get clean
 msg_ok "Cleanup Complete"
 
