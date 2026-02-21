@@ -29,7 +29,7 @@ $STD apt-get install -y \
   gettext-base
 msg_ok "Installed Dependencies"
 
-msg_info "Installing .NET SDK via dotnet-install.sh"
+msg_info "Installing .NET 8 SDK via dotnet-install.sh"
 # We use the official dotnet-install.sh script instead of the Microsoft APT feed
 # because dotnet-runtime-deps-9.0 from packages.microsoft.com has an unresolvable
 # dependency conflict on Debian 13 Trixie (requires libicu<=74, but Trixie ships libicu76).
@@ -39,7 +39,7 @@ chmod +x /tmp/dotnet-install.sh
 
 # Install the SDK (needed to compile) into /opt/dotnet
 $STD /tmp/dotnet-install.sh \
-  --channel 9.0 \
+  --channel 8.0 \
   --install-dir /opt/dotnet \
   --no-path
 
@@ -47,7 +47,7 @@ $STD /tmp/dotnet-install.sh \
 ln -sf /opt/dotnet/dotnet /usr/local/bin/dotnet
 
 rm /tmp/dotnet-install.sh
-msg_ok ".NET SDK Installed"
+msg_ok ".NET 8 SDK Installed"
 
 msg_info "Fetching Latest ImmichFrame Release"
 RELEASE=$(curl -s https://api.github.com/repos/immichFrame/ImmichFrame/releases/latest \
@@ -252,8 +252,7 @@ msg_ok "Version ${RELEASE} Saved"
 
 msg_info "Cleaning Up Build Artifacts"
 rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
-# Remove the .NET SDK components — keep only the ASP.NET Core runtime to save space
-/tmp/dotnet-install.sh --channel 9.0 --install-dir /opt/dotnet --runtime aspnetcore --no-path &>/dev/null || true
+
 # Prune SDK-only directories (sdks, templates, packs) — runtime dlls stay intact
 rm -rf /opt/dotnet/sdk /opt/dotnet/templates /opt/dotnet/packs
 $STD apt-get autoremove -y
