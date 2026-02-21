@@ -83,7 +83,7 @@ function update_script() {
     cd "${SRCDIR}/immichFrame.Web" || exit
     npm ci --silent &>/dev/null
     npm run build &>/dev/null
-    rm -rf /app/wwwroot
+    rm -rf /app/wwwroot/*
     cp -r build/* /app/wwwroot
 
     echo "${RELEASE}" > /app/version.txt
