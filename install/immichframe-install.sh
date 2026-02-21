@@ -251,7 +251,7 @@ echo "${RELEASE}" > /app/version.txt
 msg_ok "Version ${RELEASE} Saved"
 
 msg_info "Cleaning Up Build Artifacts"
-rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
+#rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
 
 #$STD apt-get autoremove -y
 $STD apt-get clean
