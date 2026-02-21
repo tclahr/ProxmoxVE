@@ -87,7 +87,7 @@ function update_script() {
     cp -r build/* /app/wwwroot
 
     echo "${RELEASE}" > /app/version.txt
-    rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
+    #rm -rf /tmp/immichframe.tar.gz "${SRCDIR}"
 
     msg_info "Starting ${APP} service"
     service immichframe start &>/dev/null
